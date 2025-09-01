@@ -38,10 +38,10 @@ int main() {
 	//Vertices coordinates square
 	GLfloat vertices[] = {
 		//first square
-		0.08f, 0.51f, 0.0f, //top right
-		0.08f, 0.35f, 0.0f, // bottom right
-		-0.08f, 0.35f, 0.0f, //bottom left
-		-0.08f, 0.51f, 0.0f, //top left
+		0.08f, 0.58f, 0.0f, //top right
+		0.08f, 0.42f, 0.0f, // bottom right
+		-0.08f, 0.42f, 0.0f, //bottom left
+		-0.08f, 0.58f, 0.0f, //top left
 		//second square
 		0.58f, -0.42f, 0.0f, //top right
 		0.58f, -0.58f, 0.0f, //bottom right
@@ -51,7 +51,11 @@ int main() {
 		-0.58f, -0.42f, 0.0f, 
 		-0.58f, -0.58f, 0.0f, 
 		-0.42f, -0.58f, 0.0f, 
-		-0.42f, -0.42f, 0.0f
+		-0.42f, -0.42f, 0.0f,
+		//triangle
+		 0.0f, 0.5f, 0.0f,   //12 center of square 1
+		0.50f, -0.50f, 0.0f, //13 center of square 2
+		-0.50f, -0.50f, 0.0f  //14 center of square 3
 
 	};
 	GLint indices[] = {
@@ -162,8 +166,14 @@ int main() {
 		glUseProgram(shaderProgram);
 		//Bind the VAO so OpenGL knows to use it
 		glBindVertexArray(VAO);
-		//Draw the triangle
+		//Draw the squares
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
+
+		//draw the triangle
+		glLineWidth(5.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // modo línea
+		glDrawArrays(GL_LINE_LOOP, 12, 3);         // usa vértices 12,13,14
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // regresar a modo relleno
 		glfwSwapBuffers(window);
 
 		//Take care of all GLFW event
