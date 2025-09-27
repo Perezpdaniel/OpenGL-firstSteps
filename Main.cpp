@@ -1,191 +1,138 @@
 #include <iostream>
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-
-//Vertex Shader source code
+// Vertex Shader source code: transforms each vertex by a 4x4 matrix (for rotation)
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"uniform mat4 transform;\n"
 "void main()\n"
 "{\n"
-"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   gl_Position = transform * vec4(aPos, 1.0);\n"
 "}\0";
-//fragment Shader source code
+
+// Fragment Shader source code: outputs a solid black color
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
 "void main()\n"
 "{\n"
-"	FragColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);\n"
+"   FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n"
 "}\0";
 
 int main() {
-	//Initialize GLFW
-	glfwInit();
+    // Initialize GLFW library (window/context management)
+    glfwInit();
 
-	//Tell GLFW what version of OpenGL we are using
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//Core Profile = only modern functions
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
-	//Vertices coordinates triangle
-	/*GLfloat vertices[] =
-	{
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, //Lower left corner
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,	 //Lower right corner
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,//Upper corner
-	};*/
-	//Vertices coordinates square
-	GLfloat vertices[] = {
-		//first square
-		0.08f, 0.58f, 0.0f, //top right
-		0.08f, 0.42f, 0.0f, // bottom right
-		-0.08f, 0.42f, 0.0f, //bottom left
-		-0.08f, 0.58f, 0.0f, //top left
-		//second square
-		0.58f, -0.42f, 0.0f, //top right
-		0.58f, -0.58f, 0.0f, //bottom right
-		0.42f, -0.58f, 0.0f, // bottom left
-		0.42f, -0.42f, 0.0f, //top left
-		//third square
-		-0.58f, -0.42f, 0.0f, 
-		-0.58f, -0.58f, 0.0f, 
-		-0.42f, -0.58f, 0.0f, 
-		-0.42f, -0.42f, 0.0f,
-		//triangle
-		 0.0f, 0.5f, 0.0f,   //12 center of square 1
-		0.50f, -0.50f, 0.0f, //13 center of square 2
-		-0.50f, -0.50f, 0.0f  //14 center of square 3
+    // Set OpenGL version to 3.3 Core Profile
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	};
-	GLint indices[] = {
-		//first square
-		0, 1, 3, //top 1 triangle
-		1, 2, 3, //top 2 triangle
-		//second square
-		4, 5, 7,
-		5, 6, 7,
-		//third square
-		8, 9, 11,
-		9, 10, 11,
+    // Create a windowed mode window and its OpenGL context
+    GLFWwindow* window = glfwCreateWindow(800, 800, "Rotating Triangle (No GLM)", NULL, NULL);
+    if (window == NULL) {
+        std::cout << "Failed to create window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
 
-	};
-	//create a GLFW object of 800 pixels 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "OPENGL", NULL, NULL);
-	// error check if the window fails to create
-	if (window == NULL) {
-		std::cout << "failed to create window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	//Introduce the window into the current context
-	glfwMakeContextCurrent(window);
-	//load GLAD so it configures OpenGL
-	gladLoadGL();
+    // Load OpenGL function pointers with GLAD
+    if (!gladLoadGL()) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
 
+    // Set the viewport size (drawing area in the window)
+    glViewport(0, 0, 800, 800);
 
-	//Specify the viewport of openGL in the window
-	//in this case the viewport goes from x=0
-	glViewport(0,0,800,800);
+    // Define triangle vertices (equilateral triangle centered on screen)
+    GLfloat vertices[] = {
+        -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower left
+         0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right
+         0.0f,  0.5f * float(sqrt(3)) * 2 / 3, 0.0f  // Upper
+    };
 
-	//Create vertex shader Object and get reference
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	//Attach Vertex Shader source to the vertex shader object
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	//Compile the vertex shader into machine code
-	glCompileShader(vertexShader);
+    // Compile vertex shader
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
 
-	//Create fragment shader object and get its reference
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	//Attach Fragment Shader source to the fragment shader object
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	//compile the fragment shader into machine code
-	glCompileShader(fragmentShader);
+    // Compile fragment shader
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
 
-	//Create shader program object and get its reference
-	GLuint shaderProgram = glCreateProgram();
+    // Link shaders into a shader program
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
 
-	//attach the vertex and fragment shaders to the shader program 
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	//wrap-up/Link all the shaders together into the sahader program
-	glLinkProgram(shaderProgram);
+    // Shaders are linked into the program, so we can delete them now
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 
-	//delete the now useless vertex and fragment shader objects
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+    // Create and bind Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	//Create reference containers for the Vartex Array Object
-	//and the Vertex Buffer Object
-	GLuint VAO, VBO;
+    // Describe vertex data layout to OpenGL
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
-	GLuint EBO;
-	glGenBuffers(1, &EBO);
+    // Unbind for safety
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
-	//Generate the VAO and VBO with only 1 object each
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
+    // Main render loop
+    while (!glfwWindowShouldClose(window)) {
+        // Set background color and clear the screen
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-	//Make the VAO the current Vertex Array Object by binding it
-	glBindVertexArray(VAO);
+        glUseProgram(shaderProgram);
 
-	//Bind the VBO specifying its a GL_ARRAY_BUFFER
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	//Introduce the vertices into the VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        // Calculate rotation angle based on elapsed time
+        float timeValue = glfwGetTime();
+        float angle = timeValue; // radians
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        float cosA = cos(angle);
+        float sinA = sin(angle);
 
+        // Manually build a 4x4 rotation matrix (Z axis)
+        float transform[16] = {
+             cosA, -sinA, 0.0f, 0.0f,
+             sinA,  cosA, 0.0f, 0.0f,
+             0.0f,  0.0f, 1.0f, 0.0f,
+             0.0f,  0.0f, 0.0f, 1.0f
+        };
+                                                
+        // Pass the rotation matrix to the vertex shader
+        unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform);
 
+        // Draw the triangle
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	//Configure the Vertex Attribute so that OpenGL knows how to read the VBO
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	//Enable the Vertex Attribute so that OpenGL knows to use it
-	glEnableVertexAttribArray(0);
+        // Swap front and back buffers and process events
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 
-	// Bind both the VBO and VAO to 0 so that we dont accidentally modify the VAO and VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	//color of the background
-	glClearColor(0.200f, 0.298f, 0.298f, 1.0f);
-	//Clear the back buffer and assing the new color to it
-	glClear(GL_COLOR_BUFFER_BIT);
-	//swap the back biffer with the front buffer
-	glfwSwapBuffers(window);
+    // Cleanup: delete OpenGL resources
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
-	//Main while loop
-	while (!glfwWindowShouldClose(window)) {
-		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		//Tell OpenGl which Shader Program we want to use
-		glUseProgram(shaderProgram);
-		//Bind the VAO so OpenGL knows to use it
-		glBindVertexArray(VAO);
-		//Draw the squares
-		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
-
-		//draw the triangle
-		glLineWidth(5.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // modo línea
-		glDrawArrays(GL_LINE_LOOP, 12, 3);         // usa vértices 12,13,14
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // regresar a modo relleno
-		glfwSwapBuffers(window);
-
-		//Take care of all GLFW event
-		glfwPollEvents();
-	}
-
-	//Delete all the objects we created
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteProgram(shaderProgram);
-
-	glfwDestroyWindow(window);
-	glfwTerminate();
-	return 0;	
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
 }
