@@ -30,7 +30,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Rotating Triangle (No GLM)", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 800, "Rotating Triangle", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create window" << std::endl;
         glfwTerminate();
