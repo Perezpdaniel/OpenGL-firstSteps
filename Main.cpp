@@ -17,7 +17,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n"
+"   FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
 "}\0";
 
 int main() {
@@ -120,7 +120,8 @@ int main() {
 
         // Draw the triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glLineWidth(3); // Set line width for outline
+		glDrawArrays(GL_TRIANGLES, 0, 3); //GL_TRIANGLES for fully filled triangle GL_LINE_LOOP for just the outline
 
         // Swap front and back buffers and process events
         glfwSwapBuffers(window);
